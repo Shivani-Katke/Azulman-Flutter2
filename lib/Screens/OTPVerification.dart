@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:http/http.dart' as http;
-import 'package:sms_autofill/sms_autofill.dart';
 import 'NavBar.dart';
 
 class OTPVerification extends StatefulWidget {
@@ -29,37 +28,56 @@ class OTPVerification extends StatefulWidget {
 }
 
 class _OTPVerificationState extends State<OTPVerification> {
-  Duration duration = Duration();
-  Timer? timer;
-  Duration timerInterval = Duration(seconds: 1);
-  int counter = 45;
-  int codeLength = 6;
-
   TextEditingController otpController = TextEditingController();
+  bool isCountDown = false;
+  Duration duration = Duration(seconds: 05);
+  Timer? timer;
+  String buttonName = '';
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    startTimer();
+  }
+
+  void reset() {
+    setState(() {
+      duration = Duration();
+    });
+  }
+
+  void addTime() {
+    final decreaseSeconds = 1;
+    setState(() {
+      final seconds = duration.inSeconds - decreaseSeconds;
+      print("seconds: $seconds");
+      if (seconds < 0) {
+        timer?.cancel();
+      } else {
+        duration = Duration(seconds: seconds);
+      }
+    });
+  }
+
+  void startTimer() {
+    isCountDown = true;
+    timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
+  }
 
   late http.Response httpResponse;
   late VerifyUser login;
 
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  //   SmsRetrieved.stopListening();
-  // }
-  // /// Get signature code
-  // _getAppSignature() async {
-  //   String signature = await SmsRetrieved.getAppSignature();
-  //   print("App Hash Key:  $signature");
-  // }
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
 
-  // ///Here ListeningSms
-  // _startListeningSms() async {
-  //   String otp = await SmsRetrieved.startListeningSms();
-  //   if (otp.isNotEmpty || otp != null) {
-  //     otpController.text= otp.split(" ")[1];
-  //   }
-  // }
   @override
   Widget build(BuildContext context) {
+    // final otpController = TextEditingController();
+
+    final seconds = twoDigits(duration.inSeconds.remainder(5));
+    buttonName = '00:$seconds';
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
@@ -129,7 +147,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                       width: MediaQuery.of(context).size.width,
                       height: MediaQuery.of(context).size.height * 0.12,
                       child: const Align(
-                        alignment: Alignment(0.9, 0.50),
+                        alignment: Alignment(0.9, 0.55),
                         child: Text(
                           'Nagpur',
                           style: TextStyle(
@@ -178,25 +196,22 @@ class _OTPVerificationState extends State<OTPVerification> {
                   SizedBox(height: 10.0),
                   Container(
                     padding:
-                        EdgeInsets.symmetric(vertical: 0.0, horizontal: 80.0),
+                    EdgeInsets.symmetric(vertical: 0.0, horizontal: 80.0),
                     child: PinCodeTextField(
-                        autovalidateMode: AutovalidateMode.always,
                         controller: otpController,
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         keyboardType: TextInputType.number,
                         animationType: AnimationType.scale,
                         appContext: context,
-                        length: codeLength,
+                        length: 6,
                         textStyle: TextStyle(
                           color: Color(0xff967d51),
                           fontWeight: FontWeight.bold,
                           fontSize: 15.0,
                         ),
-                        onChanged: (String Value) {
-                          print(Value);
-                        },
+                        onChanged: (String Value) {},
                         pinTheme: PinTheme(
-                          borderWidth: 2,
+                          borderWidth: 1.5,
                           fieldWidth: 26.0,
                           activeColor: Colors.grey,
                           inactiveColor: Colors.grey,
@@ -206,7 +221,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                         ),
                         showCursor: false),
                   ),
-                  const SizedBox(height: 10.0),
+                  // const SizedBox(height: 10.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -215,20 +230,32 @@ class _OTPVerificationState extends State<OTPVerification> {
                         style: TextStyle(color: Colors.black54),
                       ),
                       const SizedBox(width: 10.0),
-                      InkWell(
+                      buttonName != "00:00"
+                          ? Text(
+                        '$buttonName',
+                        style: const TextStyle(
+                          fontSize: 15.0,
+                        ),
+                      )
+                          : InkWell(
                         onTap: () {
-                          _sendDataToSecondScreen(context);
+                          Text('00:$seconds');
+                          print(buttonName);
+                          // _sendDataToSecondScreen(context);
                         },
                         child: const Text(
                           'Resend OTP',
                           style: TextStyle(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15.0,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 15.0),
+
                   Container(
                     height: 45,
                     width: 300,
@@ -236,11 +263,21 @@ class _OTPVerificationState extends State<OTPVerification> {
                       color: Color(0xff967d51),
                     ),
                     child: TextButton(
-                      style: ButtonStyle(
+                      style: const ButtonStyle(
                         splashFactory: NoSplash.splashFactory,
                       ),
                       onPressed: () {
-                        setState(() async {
+                        otpController.value.text.isEmpty
+                            ? Fluttertoast.showToast(
+                            msg: 'Please enter the OTP.',
+                            backgroundColor: Colors.black45,
+                            timeInSecForIosWeb: 5)
+                            : otpController.text.length < 6
+                            ? Fluttertoast.showToast(
+                            msg: 'Please enter a valid 6 digit OTP.',
+                            backgroundColor: Colors.black45,
+                            timeInSecForIosWeb: 5)
+                            : setState(() async {
                           var data = jsonEncode(<String, String>{
                             'User': '${widget.phoneno}',
                             'OTP': otpController.text,
@@ -259,7 +296,8 @@ class _OTPVerificationState extends State<OTPVerification> {
                             Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => Customerhome()
+                                  builder: (context) =>
+                                      Customerhome(),
                                 ),
                                 ModalRoute.withName("/Customerhome")
                             );
@@ -293,21 +331,19 @@ class _OTPVerificationState extends State<OTPVerification> {
     );
   }
 
-  void _listenOtp() async {
-    await SmsAutoFill().listenForCode;
-  }
-
   void _sendDataToSecondScreen(BuildContext Context) {
     String phoneNumber = '${widget.phoneno}';
     String DeviceName = '${widget.deviceName}';
     String DeviceId = '${widget.identifier}';
-    Navigator.push(
+    Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
             builder: (context) => Emaillogin(
-                  phNumber: phoneNumber,
-                  deviceName: DeviceName,
-                  identifier: DeviceId,
-                )));
+              phNumber: phoneNumber,
+              deviceName: DeviceName,
+              identifier: DeviceId,
+            )),
+        ModalRoute.withName("/Emaillogin")
+    );
   }
 }
