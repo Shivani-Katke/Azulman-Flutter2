@@ -29,7 +29,7 @@ class _splashscreenState extends State<splashscreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('images/azulman_bg.png'),
             fit: BoxFit.fill,
@@ -39,7 +39,7 @@ class _splashscreenState extends State<splashscreen> {
           backgroundColor: Colors.transparent,
           body: Center(
             child: Padding(
-              padding: EdgeInsets.only(top: 250.0,bottom: 200.0),
+              padding: EdgeInsets.only(top: 300.0,bottom: 250.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -54,7 +54,7 @@ class _splashscreenState extends State<splashscreen> {
               color: const Color(0xFF967d51),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget> [
+                children: const <Widget> [
                   Text("SBE Technologies Pvt Ltd.",
                     style: TextStyle(color: Colors.white),
                   )

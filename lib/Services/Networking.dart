@@ -1,26 +1,32 @@
-import 'dart:convert';
-import 'package:demo_azulmanproject/constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
+
+import 'package:demo_azulmanproject/Services/api_constants.dart';
 import 'package:http/http.dart' as http;
 
-
 class API_Manager {
-  Future<Welcome>  getData() async {
+  Future<http.Response> getData(url, data) async {
     var client = http.Client();
 
-    var welcome = null;
+    var login = null;
 
     try {
-      var response = await client.get(Uri.parse(Strings.url));
-      if (response.statusCode == 200) {
-        var jsonString = response.body;
-        var jsonMap = jsonDecode(jsonString);
-        welcome = Welcome.fromJson(jsonMap);
-      }
+      var response = await client.post(Uri.parse(url),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: data);
+      print(response.body);
+
+
+      return response;
+
+    } catch (e) {
+      print(e);
+      // return welcome;
     }
-    catch (e) {
-      return welcome;
-    }
-    return welcome;
+    return login;
   }
 }
+
+
+
+

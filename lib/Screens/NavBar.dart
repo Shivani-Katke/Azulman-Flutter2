@@ -1,48 +1,84 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'dart:io';
 
-class NavBar extends StatelessWidget {
+class ListTiles extends StatelessWidget {
+  const ListTiles({required this.title, required this.onTap,required VisualDensity visualDensity,});
+
+  final String title;
+  final Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      visualDensity: VisualDensity(horizontal: 0, vertical: -3),
+      title: Text(
+          title
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+
+class Containerbox extends StatelessWidget {
+  Containerbox({required this.title, required this.onPressed});
+
+  final String title;
+  final Function() onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 175.0,
-      child: Drawer(
-        child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              ListTile(
-                title: Text("Terms"),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
+      height: 38,
+      constraints: const BoxConstraints(maxWidth: 400.0,),
+      margin: const EdgeInsets.all(10),
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          splashFactory: NoSplash.splashFactory,
+          side: const BorderSide(
+            color: Colors.black,
+          ),
+        ),
+        onPressed: onPressed,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 15.0,
               ),
-              ListTile(
-                title: Text("How It Works"),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: Text("Privacy"),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: Text("About Azul"),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                title: Text("Contact Us"),
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-
-            ]),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_outlined,
+              color: Colors.black,
+              size: 15.0,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+class SizeConfig {
+  static MediaQueryData? _mediaQueryData;
+  static double? screenWidth;
+  static double? screenHeight;
+  static double? defaultSize;
+  static Orientation? orientation;
+
+  void init(BuildContext context) {
+    _mediaQueryData = MediaQuery.of(context);
+    screenWidth = _mediaQueryData!.size.width;
+    screenHeight = _mediaQueryData!.size.height;
+    orientation = _mediaQueryData!.orientation;
+  }
+}
+
+
+
