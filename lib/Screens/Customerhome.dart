@@ -1,15 +1,12 @@
-import 'dart:convert';
-
 import 'package:demo_azulmanproject/Screens/loginscreen.dart';
-import 'package:demo_azulmanproject/Services/Networking.dart';
-import 'package:demo_azulmanproject/Services/api_constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../Constants.dart';
-import 'package:demo_azulmanproject/Screens/NavBar.dart';
-import 'package:http/http.dart' as http;
+import 'package:demo_azulmanproject/Provider/NavBar.dart';
+
 
 class Customerhome extends StatefulWidget {
   @override
@@ -18,22 +15,20 @@ class Customerhome extends StatefulWidget {
 
 class _CustomerhomeState extends State<Customerhome> {
   DateTime timeBackPressed = DateTime.now();
-  late http.Response httpResponse;
-  late Logout login;
 
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
-    //double deviceHeight = MediaQuery.of(context).size.height / 18;
+    double deviceHeight = MediaQuery.of(context).size.height / 18;
 
     return WillPopScope(
-      onWillPop: () async {
+      onWillPop: () async{
         final difference = DateTime.now().difference(timeBackPressed);
         final isExitWarning = difference >= Duration(seconds: 2);
 
         timeBackPressed = DateTime.now();
 
-        if (isExitWarning) {
+        if(isExitWarning) {
           final message = 'Press back again to exit';
           Fluttertoast.showToast(
             msg: message,
@@ -42,7 +37,7 @@ class _CustomerhomeState extends State<Customerhome> {
             toastLength: Toast.LENGTH_LONG,
           );
           return false;
-        } else {
+        }else{
           Fluttertoast.cancel();
           return true;
         }
@@ -95,7 +90,6 @@ class _CustomerhomeState extends State<Customerhome> {
                         visualDensity: VisualDensity(horizontal: 0, vertical: -4),
                         onTap: () {},
                         title: 'How It Works',
-
                       ),
                       ListTiles(
                         visualDensity: VisualDensity(horizontal: 0, vertical: -4),
@@ -116,7 +110,7 @@ class _CustomerhomeState extends State<Customerhome> {
                   ),
                 ),
                 SizedBox(
-                  height: MediaQuery.of(context).devicePixelRatio * 82
+                  height: MediaQuery.of(context).devicePixelRatio * 82,
                 ),
                 Container(
                   height: 45,
@@ -128,34 +122,11 @@ class _CustomerhomeState extends State<Customerhome> {
                     style: const ButtonStyle(
                       splashFactory: NoSplash.splashFactory,
                     ),
-                    onPressed: () {
-                      setState(() async{
-                        var data = jsonEncode(<String, String>{
-                            "UserID": '721',
-                        });
-                        httpResponse = await API_Manager()
-                            .getData(Strings.logoutandremovedeviceid, data);
-
-                        if (httpResponse.statusCode == 200) {
-                          var jsonString = httpResponse.body;
-                          var jsonMap = jsonDecode(jsonString);
-                          login = Logout.fromJson(jsonMap);
-                        }
-                        print("Login Response: ${login.userId.toString()}");
-
-                        if (login == "true") {
-                          Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => loginscreen()
-                              ),
-                              ModalRoute.withName("/loginscreen")
-                          );
-                        } else {
-                          return null;
-                        }
-
-                      });
+                    onPressed: () async {
+                      final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                      sharedPreferences.remove('phone');
+                      Get.offAll(loginscreen());
+                      // Navigator.push(context, MaterialPageRoute(builder: (context) => loginscreen()));
                     },
                     child: const Text(
                       'LOGOUT',
@@ -199,7 +170,7 @@ class _CustomerhomeState extends State<Customerhome> {
                       Container(
                         color: const Color(0xFF967d51),
                         width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height * 0.12,
+                        height: MediaQuery.of(context).size.height*0.12,
                         child: const Align(
                           alignment: Alignment(0.9, 0.50),
                           child: Text(
@@ -227,10 +198,10 @@ class _CustomerhomeState extends State<Customerhome> {
             ),
             Form(
               child: Padding(
-                padding: EdgeInsets.only(top: 150.0, left: 10.0, bottom: 20.0),
+                padding: EdgeInsets.only(top: 150.0,left: 10.0, bottom: 20.0),
                 child: Column(
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       "Customer Screen",
                       style: TextStyle(
                           fontSize: 30,

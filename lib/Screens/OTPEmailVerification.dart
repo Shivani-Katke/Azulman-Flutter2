@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:demo_azulmanproject/Screens/Customerhome.dart';
 import 'package:demo_azulmanproject/Services/api_constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
+import 'package:demo_azulmanproject/Services/jsonResponse.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -9,7 +9,7 @@ import 'package:demo_azulmanproject/Services/Networking.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import '../../Constants.dart';
-import 'NavBar.dart';
+import '../Provider/NavBar.dart';
 
 class OTPEmailVerification extends StatefulWidget {
   OTPEmailVerification({required this.phoneNo, required this.email, required this.deviceName, required this.identifier});
@@ -153,32 +153,32 @@ class _OTPEmailVerificationState extends State<OTPEmailVerification> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                      height: 10.0
-                  ),
-                  PinCodeTextField(
-                      controller: otpController,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      keyboardType: TextInputType.number,
-                      animationType: AnimationType.scale,
-                      appContext: context,
-                      length: 6,
-                      textStyle: TextStyle(
-                        color: Color(0xff967d51),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15.0,
-                      ),
-                      onChanged: (String Value) {},
-                      pinTheme: PinTheme(
-                        borderWidth: 1.5,
-                        fieldWidth: 30.0,
-                        activeColor: Colors.grey,
-                        inactiveColor: Colors.grey,
-                        inactiveFillColor: Colors.grey,
-                        selectedColor: Colors.grey.shade700,
-                        selectedFillColor: Colors.grey.shade700,
-                      ),
-                      showCursor: false
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 0.0, horizontal: 80.0),
+                    child: PinCodeTextField(
+                        controller: otpController,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        keyboardType: TextInputType.number,
+                        animationType: AnimationType.slide,
+                        appContext: context,
+                        length: 6,
+                        textStyle: TextStyle(
+                          color: Color(0xff967d51),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15.0,
+                        ),
+                        onChanged: (String Value) {},
+                        pinTheme: PinTheme(
+                          borderWidth: 1.5,
+                          fieldWidth: 26.0,
+                          activeColor: Colors.grey,
+                          inactiveColor: Colors.grey,
+                          inactiveFillColor: Colors.grey,
+                          selectedColor: Colors.grey.shade700,
+                          selectedFillColor: Colors.grey.shade700,
+                        ),
+                        showCursor: false
+                    ),
                   ),
                   const SizedBox(height: 10.0),
                   Row(
@@ -213,6 +213,18 @@ class _OTPEmailVerificationState extends State<OTPEmailVerification> {
                         splashFactory: NoSplash.splashFactory,
                       ),
                       onPressed: () {
+                        otpController.value.text.isEmpty?
+                        Fluttertoast.showToast(
+                            msg: 'Please enter the OTP.',
+                            backgroundColor: Colors.black45,
+                            timeInSecForIosWeb: 5
+                        ):
+                        otpController.text.length < 6?
+                        Fluttertoast.showToast(
+                            msg: 'Please enter a valid 6 digit OTP.',
+                            backgroundColor: Colors.black45,
+                            timeInSecForIosWeb: 5
+                        ):
                         setState(() async {
                           var data = jsonEncode(<String, String>{
                             'User': '${widget.phoneNo}',

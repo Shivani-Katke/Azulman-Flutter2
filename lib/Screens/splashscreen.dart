@@ -4,8 +4,6 @@ import 'loginscreen.dart';
 
 
 class splashscreen extends StatefulWidget {
-  const splashscreen({Key? key}) : super(key: key);
-
 
   @override
   _splashscreenState createState() => _splashscreenState();
@@ -36,6 +34,7 @@ class _splashscreenState extends State<splashscreen> {
           ),
         ),
         child: Scaffold(
+          resizeToAvoidBottomInset: false,
           backgroundColor: Colors.transparent,
           body: Center(
             child: Padding(
@@ -66,3 +65,4 @@ class _splashscreenState extends State<splashscreen> {
     );
   }
 }
+

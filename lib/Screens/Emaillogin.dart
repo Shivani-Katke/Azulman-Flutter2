@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:demo_azulmanproject/Services/Networking.dart';
 import 'package:demo_azulmanproject/Services/api_constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
 import 'package:flutter/material.dart';
 import 'package:demo_azulmanproject/constants.dart';
-import 'package:demo_azulmanproject/Screens/NavBar.dart';
+import 'package:demo_azulmanproject/Provider/NavBar.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'OTPEmailVerification.dart';
+import 'package:demo_azulmanproject/Services/jsonResponse.dart';
 
 class Emaillogin extends StatefulWidget {
   Emaillogin(
@@ -27,16 +27,13 @@ class Emaillogin extends StatefulWidget {
 class _EmailloginState extends State<Emaillogin> {
   TextEditingController emailController = TextEditingController();
 
-
   late http.Response httpResponse;
   late EmailLoginResponse login;
 
-
   @override
   Widget build(BuildContext context) {
-    TextEditingController phController = TextEditingController(text: '${widget.phNumber}');
-
-
+    TextEditingController phController =
+    TextEditingController(text: '${widget.phNumber}');
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
@@ -146,11 +143,9 @@ class _EmailloginState extends State<Emaillogin> {
                   const SizedBox(height: 20.0),
                   Container(
                     padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                    child:   TextFormField(
+                    child: TextFormField(
                       controller: phController,
-                      onChanged: (text) {
-                      },
-                      //initialValue: '${widget.phNumber}',
+                      // initialValue: '${widget.phNumber}',
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       keyboardType: TextInputType.number,
                       maxLength: 10,
@@ -167,22 +162,13 @@ class _EmailloginState extends State<Emaillogin> {
                         ),
                         hintStyle: TextStyle(color: Colors.grey),
                         focusedBorder: UnderlineInputBorder(
-                          //enabledBorder:OutlineInputBorder(
+//enabledBorder:OutlineInputBorder(
                           borderSide: BorderSide(
                             color: Color(0xFF1A237E),
                             width: 2.0,
                           ), // color of the border beside email.
                         ),
                       ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Phone Number cannot be Blank.";
-                        } else if (value.length < 10) {
-                          return " Please enter a valid 10 digit Phone Number.";
-                        } else {
-                          return null;
-                        }
-                      },
                     ),
                   ),
                   const SizedBox(height: 10.0),
@@ -244,45 +230,60 @@ class _EmailloginState extends State<Emaillogin> {
                         splashFactory: NoSplash.splashFactory,
                       ),
                       onPressed: () {
-                        !emailController.value.text.contains('@') ||
-                                !emailController.value.text.contains('.com')
+                        !emailController.text.contains('@') &&
+                            !emailController.text.contains('.com')
                             ? Fluttertoast.showToast(
-                                msg: 'Please enter a valid email.',
-                                   ):
-                            phController.value.text.isEmpty?
+                          msg: 'Please enter a valid Email.',
+                          backgroundColor: Colors.black45,
+                          timeInSecForIosWeb: 5,
+                        ):
+                        emailController.text.isEmpty?
+                        Fluttertoast.showToast(
+                          msg: 'Email cannot be blank.',
+                          backgroundColor: Colors.black45,
+                          timeInSecForIosWeb: 5,
+                        ):
+                        phController.value.text.length < 10?
+                        Fluttertoast.showToast(
+                          msg: 'Please enter a valid 10 digit Phone Number.',
+                          backgroundColor: Colors.black45,
+                          timeInSecForIosWeb: 5,
+                        ):
+                        phController.value.text.isEmpty
+                            ? Fluttertoast.showToast(
+                          msg: 'Phone Number cannot be blank.',
+                          backgroundColor: Colors.black45,
+                          timeInSecForIosWeb: 5,
+                        ):
+                        setState(() async {
+                          var data = jsonEncode(<String, String>{
+                            'Phoneno': '${widget.phNumber}',
+                            'Email': emailController.text,
+                            'DeviceName': '${widget.deviceName}',
+                            'DeviceID': '${widget.identifier}',
+                          });
+                          httpResponse = await API_Manager()
+                              .getData(Strings.sendotpinemail, data);
+
+                          if (httpResponse.statusCode == 200) {
+                            var jsonString = httpResponse.body;
+                            var jsonMap = jsonDecode(jsonString);
+                            login =
+                                EmailLoginResponse.fromJson(jsonMap);
+                          }
+                          if (login.isValidUser == "true") {
+                            _sendDataToSecondScreen(context);
+                          } else {
                             Fluttertoast.showToast(
-                              msg: 'Please enter a valid 10 digit phone number.',
-                            ):
-                                    setState(() async {
-                                    var data = jsonEncode(<String, String>{
-                                      'Phoneno': '${widget.phNumber}',
-                                      'Email': emailController.text,
-                                      'DeviceName': '${widget.deviceName}',
-                                      'DeviceID': '${widget.identifier}',
-                                    });
-                                         httpResponse = await API_Manager()
-                                        .getData(Strings.sendotpinemail, data);
+                              msg: login.message.toString(),
+                              backgroundColor: Colors.black45,
+                              timeInSecForIosWeb: 5,
+                            );
+                          }
 
-                                    if (httpResponse.statusCode == 200) {
-                                      var jsonString = httpResponse.body;
-                                      var jsonMap = jsonDecode(jsonString);
-                                      login =
-                                          EmailLoginResponse.fromJson(jsonMap);
-                                    }
-
-                                    if (login.isValidUser == "true") {
-                                      _sendDataToSecondScreen(context);
-                                    } else {
-                                      Fluttertoast.showToast(
-                                        msg: login.message.toString(),
-                                        backgroundColor: Colors.black45,
-                                        timeInSecForIosWeb: 5,
-                                      );
-                                    }
-
-                                    print(
-                                        "From login: ${login.isValidUser} ${login.message}");
-                                  });
+                          print(
+                              "From login: ${login.isValidUser} ${login.message}");
+                        });
                       },
                       child: const Text(
                         "Send OTP",
@@ -295,7 +296,7 @@ class _EmailloginState extends State<Emaillogin> {
                   ),
                   SizedBox(
                     height: 10.0,
-                  ),
+                  )
                 ],
               ),
             ),
@@ -304,19 +305,19 @@ class _EmailloginState extends State<Emaillogin> {
       ),
     );
   }
+
   void _sendDataToSecondScreen(BuildContext Context) {
     String emailId = emailController.text;
+    String phoneNo = '${widget.phNumber}';
     String DeviceName = '${widget.deviceName}';
     String DeviceId = '${widget.identifier}';
-    String phoneNo = '${widget.phNumber}';
     Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => OTPEmailVerification(
-                  email: emailId,
-                  phoneNo: phoneNo,
-                  deviceName: DeviceName,
-                  identifier: DeviceId,
-                )));
+                email: emailId,
+                phoneNo: phoneNo,
+                deviceName: DeviceName,
+                identifier: DeviceId)));
   }
 }

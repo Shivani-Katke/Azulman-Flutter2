@@ -1,23 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:demo_azulmanproject/Provider/ResendChangeNotifier.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
 import 'package:demo_azulmanproject/Screens/Customerhome.dart';
-import 'package:demo_azulmanproject/Screens/Emaillogin.dart';
 import 'package:demo_azulmanproject/Services/Networking.dart';
 import 'package:demo_azulmanproject/Services/api_constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
-import 'package:demo_azulmanproject/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:demo_azulmanproject/Services/jsonResponse.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:http/http.dart' as http;
-import 'NavBar.dart';
+import 'Emaillogin.dart';
+import 'package:demo_azulmanproject/Provider/NavBar.dart';
+import 'package:demo_azulmanproject/constants.dart';
+import 'package:provider/provider.dart';
+import 'package:otp_autofill/otp_autofill.dart';
+
 
 class OTPVerification extends StatefulWidget {
   OTPVerification(
       {required this.phoneno,
-      required this.identifier,
-      required this.deviceName});
+        required this.deviceName,
+        required this.identifier});
 
   final String phoneno;
   final String deviceName;
@@ -28,41 +32,56 @@ class OTPVerification extends StatefulWidget {
 }
 
 class _OTPVerificationState extends State<OTPVerification> {
-  TextEditingController otpController = TextEditingController();
-  bool isCountDown = false;
-  Duration duration = Duration(seconds: 05);
+  TextEditingController otpTextEditController = TextEditingController();
+ // late OTPTextEditController otpTextEditController;
+  late OTPInteractor _otpInteractor;
+
   Timer? timer;
-  String buttonName = '';
 
-
+  // NEW : Change Duration value of this two variables.
+  int durationValue = 45;
+  Duration duration = const Duration(seconds: 45);
 
   @override
   void initState() {
     super.initState();
+
+    // NEW : Listening for OTP.
+    //listenForOtp();
     startTimer();
   }
 
+
+  // @override
+  // Future<void> dispose() async {
+  //   // NEW : RESET the Timer;
+  //   reset();
+  //   // NEW : Stop listening for OTP.
+  //   await otpTextEditController.stopListen();
+  //   super.dispose();
+  // }
+
   void reset() {
     setState(() {
-      duration = Duration();
+      // NEW : Reset the duration value.
+      duration = Duration(seconds: durationValue);
     });
   }
 
   void addTime() {
-    final decreaseSeconds = 1;
+    const decreaseSeconds = 1;
     setState(() {
-      final seconds = duration.inSeconds - decreaseSeconds;
-      print("seconds: $seconds");
-      if (seconds < 0) {
+      final sec = duration.inSeconds - decreaseSeconds;
+      if (sec < 0) {
         timer?.cancel();
+        context.read<ResendChangeNotifier>().toggleResend();
       } else {
-        duration = Duration(seconds: seconds);
+        duration = Duration(seconds: sec);
       }
     });
   }
 
   void startTimer() {
-    isCountDown = true;
     timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
   }
 
@@ -73,10 +92,10 @@ class _OTPVerificationState extends State<OTPVerification> {
 
   @override
   Widget build(BuildContext context) {
-    // final otpController = TextEditingController();
 
-    final seconds = twoDigits(duration.inSeconds.remainder(5));
-    buttonName = '00:$seconds';
+    String secondsText = twoDigits(duration.inSeconds);
+    String buttonName = '00:$secondsText';
+
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -198,7 +217,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                     padding:
                     EdgeInsets.symmetric(vertical: 0.0, horizontal: 80.0),
                     child: PinCodeTextField(
-                        controller: otpController,
+                        controller: otpTextEditController,
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         keyboardType: TextInputType.number,
                         animationType: AnimationType.scale,
@@ -229,29 +248,35 @@ class _OTPVerificationState extends State<OTPVerification> {
                         "Didn't receive OTP?",
                         style: TextStyle(color: Colors.black54),
                       ),
-                      const SizedBox(width: 10.0),
-                      buttonName != "00:00"
+                      SizedBox(width: 10.0),
+
+                      // NEW : Check if OTP is resendOTP = false
+                      (!context.watch<ResendChangeNotifier>().resendOTP)
                           ? Text(
-                        '$buttonName',
+                        buttonName,
                         style: const TextStyle(
                           fontSize: 15.0,
                         ),
                       )
                           : InkWell(
-                        onTap: () {
-                          Text('00:$seconds');
-                          print(buttonName);
-                          // _sendDataToSecondScreen(context);
-                        },
                         child: const Text(
-                          'Resend OTP',
+                          "Resend OTP",
                           style: TextStyle(
                             color: Colors.black54,
                             fontWeight: FontWeight.bold,
                             fontSize: 15.0,
                           ),
                         ),
+                        onTap: () {
+                          // NEW : Set the resendOTP = false
+                          context.read<ResendChangeNotifier>().toggleResend();
+                          // NEW : Reset the timer
+                          reset();
+                          // NEW : Start the timer
+                          startTimer();
+                        },
                       ),
+
                     ],
                   ),
                   const SizedBox(height: 15.0),
@@ -263,16 +288,16 @@ class _OTPVerificationState extends State<OTPVerification> {
                       color: Color(0xff967d51),
                     ),
                     child: TextButton(
-                      style: const ButtonStyle(
+                      style: ButtonStyle(
                         splashFactory: NoSplash.splashFactory,
                       ),
                       onPressed: () {
-                        otpController.value.text.isEmpty
+                        otpTextEditController.value.text.isEmpty
                             ? Fluttertoast.showToast(
                             msg: 'Please enter the OTP.',
                             backgroundColor: Colors.black45,
                             timeInSecForIosWeb: 5)
-                            : otpController.text.length < 6
+                            : otpTextEditController.text.length < 6
                             ? Fluttertoast.showToast(
                             msg: 'Please enter a valid 6 digit OTP.',
                             backgroundColor: Colors.black45,
@@ -280,7 +305,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                             : setState(() async {
                           var data = jsonEncode(<String, String>{
                             'User': '${widget.phoneno}',
-                            'OTP': otpController.text,
+                            'OTP': otpTextEditController.text,
                             'DeviceName': '${widget.deviceName}',
                             'DeviceID': '${widget.identifier}',
                           });

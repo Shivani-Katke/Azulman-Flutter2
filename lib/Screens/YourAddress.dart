@@ -1,7 +1,7 @@
 import 'package:demo_azulmanproject/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'NavBar.dart';
+import '../Provider/NavBar.dart';
 
 class YourAddress extends StatefulWidget {
   @override

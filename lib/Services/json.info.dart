@@ -30,28 +30,6 @@ class LoginwithOtp {
 }
 
 
-//LoginwithOTP'sResponse:
-class LoginResponse {
-  LoginResponse({
-    required this.flag,
-    required this.message
-  });
-
-  String flag;
-  String message;
-
-  factory LoginResponse.fromJson(Map<String, dynamic> json) =>
-      LoginResponse(
-          flag: json["flag"],
-          message: json["message"]
-      );
-
-  Map<String, dynamic> toJson() =>
-      {
-        "flag": flag,
-        "message": message
-      };
-}
 
 //VerifyLoginwithOTP:
 VerifyLogin verifyLoginFromJson(String str) => VerifyLogin.fromJson(json.decode(str));
@@ -86,22 +64,6 @@ class VerifyLogin {
   };
 }
 
-//VerifyLoginwithOTP'sResponse:
-class VerifyUser {
-  VerifyUser({
-    required this.isValidUser,
-  });
-
-  String isValidUser;
-
-  factory VerifyUser.fromJson(Map<String, dynamic> json) => VerifyUser(
-    isValidUser: json["IsValidUser"],
-  );
-
-  Map<String, dynamic> toJson() => {
-    "IsValidUser": isValidUser,
-  };
-}
 
 //EmailLoginAPI:
 EmailLogin emailLoginFromJson(String str) => EmailLogin.fromJson(json.decode(str));
@@ -136,31 +98,6 @@ class EmailLogin {
   };
 }
 
-//EmailLoginapi'sResponse:
-EmailLoginResponse emailLoginResponseFromJson(String str) => EmailLoginResponse.fromJson(json.decode(str));
-
-String emailLoginResponseToJson(EmailLoginResponse data) => json.encode(data.toJson());
-
-class EmailLoginResponse {
-  EmailLoginResponse({
-    required this.isValidUser,
-    required this.message,
-  });
-
-  String isValidUser;
-  String message;
-
-  factory EmailLoginResponse.fromJson(Map<String, dynamic> json) => EmailLoginResponse(
-    isValidUser: json["IsValidUser"],
-    message: json["message"],
-  );
-
-  Map<String, dynamic> toJson() => {
-    "IsValidUser": isValidUser,
-    "message": message,
-  };
-}
-
 // Logout Api
 Logout logoutFromJson(String str) => Logout.fromJson(json.decode(str));
 
@@ -179,5 +116,28 @@ class Logout {
 
   Map<String, dynamic> toJson() => {
     "UserID": userId,
+  };
+}
+
+
+//NavBar Side Menu Customer Screen.
+
+UserSideNav userSideNavFromJson(String str) => UserSideNav.fromJson(json.decode(str));
+
+String userSideNavToJson(UserSideNav data) => json.encode(data.toJson());
+
+class UserSideNav {
+  UserSideNav({
+    required this.user,
+  });
+
+  String user;
+
+  factory UserSideNav.fromJson(Map<String, dynamic> json) => UserSideNav(
+    user: json["user"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "user": user,
   };
 }

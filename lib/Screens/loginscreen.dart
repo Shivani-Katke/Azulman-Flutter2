@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:demo_azulmanproject/Services/api_constants.dart';
-import 'package:demo_azulmanproject/Screens/NavBar.dart';
+import 'package:demo_azulmanproject/Provider/NavBar.dart';
 import 'package:demo_azulmanproject/constants.dart';
-import 'package:demo_azulmanproject/Services/json.info.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
 import 'package:demo_azulmanproject/Services/Networking.dart';
@@ -10,8 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'OTPVerification.dart';
-
+import 'package:demo_azulmanproject/Services/jsonResponse.dart';
 
 class loginscreen extends StatefulWidget {
   @override
@@ -50,18 +50,21 @@ class _loginscreenState extends State<loginscreen> {
 
   late http.Response httpResponse;
   late LoginResponse login;
+
+  String? get errorText {
+    final text = phonenoController.value.text;
+    if (text.isEmpty) {
+      return 'Phone Number cannot be blank.';
+    }
+    if (text.length < 10) {
+      return 'Please enter a valid 10 digit Phone Number.';
+    }
+    // return null if the text is valid
+    return null;
+  }
+
   GlobalKey<FormState> formkey = GlobalKey<FormState>();
 
-  void validate() {
-    print("isValid");
-    if (formkey.currentState != null) {
-      if (formkey.currentState!.validate()) {
-        print('Validated');
-      } else {
-        print('Not Validated');
-      }
-    }
-  }
   DateTime timeBackPressed = DateTime.now();
   @override
   Widget build(BuildContext context) {
@@ -154,7 +157,7 @@ class _loginscreenState extends State<loginscreen> {
                             .width,
                         height: MediaQuery.of(context).size.height*0.12,
                         child: const Align(
-                          alignment: Alignment(0.9, 0.55),
+                          alignment: Alignment(0.9, 0.50),
                           child: Text(
                             'Nagpur',
                             style: TextStyle(
@@ -195,39 +198,32 @@ class _loginscreenState extends State<loginscreen> {
                     Container(
                       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                       child: TextFormField(
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          keyboardType: TextInputType.number,
-                          controller: phonenoController,
-                          maxLength: 10,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
-                          ],
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(
-                            counterText: '',
-                            hintText: 'Phone Number',
-                            prefixIcon: Icon(
-                              Icons.phone,
-                              color: Colors.black,
-                            ),
-                            hintStyle: TextStyle(color: Colors.grey),
-                            focusedBorder: UnderlineInputBorder(
-                              //enabledBorder:OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Color(0xFF1A237E),
-                                width: 2.0,
-                              ), // color of the border beside email.
-                            ),
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        keyboardType: TextInputType.number,
+                        controller: phonenoController,
+                        maxLength: 10,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]'))
+                        ],
+                        style: const TextStyle(color: Colors.black),
+                        decoration: InputDecoration(
+                          counterText: '',
+                          hintText: 'Phone Number',
+                          errorText: errorText,
+                          prefixIcon: Icon(
+                            Icons.phone,
+                            color: Colors.black,
                           ),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Phone Number cannot be Blank.";
-                            } else if (value.length < 10) {
-                              return " Please enter a valid 10 digit Phone Number.";
-                            } else {
-                              return null;
-                            }
-                          }),
+                          hintStyle: TextStyle(color: Colors.grey),
+                          focusedBorder: UnderlineInputBorder(
+                            //enabledBorder:OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color(0xFF1A237E),
+                              width: 2.0,
+                            ), // color of the border beside email.
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 20.0),
                     Container(
@@ -241,9 +237,25 @@ class _loginscreenState extends State<loginscreen> {
                           splashFactory: NoSplash
                               .splashFactory, //Used for blue flash light on pressed button.
                         ),
-                        onPressed: () {
+
+                        onPressed: () async {
+                          final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                          sharedPreferences.setString('phone', phonenoController.text);
                           _getDeviceDetails();
-                          validate();
+
+                          phonenoController.value.text.isEmpty?
+                          Fluttertoast.showToast(
+                              msg: 'Phone Number cannot be blank.',
+                              backgroundColor: Colors.black45,
+                              timeInSecForIosWeb: 5
+                          ):
+                          phonenoController.text.length < 10?
+                          Fluttertoast.showToast(
+                              msg: 'Please enter a valid 10 digit Phone Number.',
+                              backgroundColor: Colors.black45,
+                              timeInSecForIosWeb: 5
+                          ):
+
                           setState(() async {
                             var data = jsonEncode(<String, String>{
                               'User': phonenoController.text,
@@ -268,6 +280,8 @@ class _loginscreenState extends State<loginscreen> {
                               );
                             }
                             print("From login: ${login.flag} ${login.message}");
+
+
                           });
                         },
                         child: const Text(
@@ -297,6 +311,7 @@ class _loginscreenState extends State<loginscreen> {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                OTPVerification(phoneno: phoneNumber,deviceName: DeviceName, identifier: DeviceId)));
+                OTPVerification(phoneno: phoneNumber, deviceName: DeviceName, identifier: DeviceId,)));
   }
 }
+

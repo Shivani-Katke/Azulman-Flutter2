@@ -7,6 +7,10 @@ const kAzulmanLogo = BoxDecoration(
     )
 );
 
+const kBottomTextStyle = Text("SBE Technologies Pvt Ltd.",
+  style: TextStyle(color: Colors.white),
+);
+
 const kTextNagpur = Padding(
   padding: EdgeInsets.only(left: 220.0
         ),
@@ -14,8 +18,3 @@ const kTextNagpur = Padding(
     style: TextStyle(fontSize: 15.0),
   ),
 );
-
-const kBottomTextStyle = Text("SBE Technologies Pvt Ltd.",
-  style: TextStyle(color: Colors.white),
-);
-
