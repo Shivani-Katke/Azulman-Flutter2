@@ -170,11 +170,12 @@ class _loginscreenState extends State<loginscreen> {
                     ],
                   ),
                   Positioned(
-                    top: MediaQuery.of(context).devicePixelRatio * 12,
+                   // top: MediaQuery.of(context).devicePixelRatio * 12,
                     left: SizeConfig.screenWidth! / 2.5,
                     child: Container(
                       height: 80,
                       width: 80,
+                       margin: EdgeInsets.only(top: 35),
                       decoration: kAzulmanLogo,
                     ),
                   ),

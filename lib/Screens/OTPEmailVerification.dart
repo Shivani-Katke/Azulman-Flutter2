@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:demo_azulmanproject/Provider/ResendChangeNotifier.dart';
 import 'package:demo_azulmanproject/Screens/Customerhome.dart';
 import 'package:demo_azulmanproject/Services/api_constants.dart';
 import 'package:demo_azulmanproject/Services/jsonResponse.dart';
@@ -8,6 +10,7 @@ import 'package:pin_code_fields/pin_code_fields.dart';
 import 'package:demo_azulmanproject/Services/Networking.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/src/provider.dart';
 import '../../Constants.dart';
 import '../Provider/NavBar.dart';
 
@@ -28,9 +31,59 @@ class _OTPEmailVerificationState extends State<OTPEmailVerification> {
 
   late http.Response httpResponse;
   late VerifyUser login;
+  late EmailLoginResponse resendotp;
+
+
+  Timer? timer;
+  // NEW : Change Duration value of this two variables.
+  int durationValue = 45;
+  Duration duration = const Duration(seconds: 45);
+
+
+  @override
+  void initState() {
+    super.initState();
+    // NEW : Listening for OTP.
+    //listenForOtp();
+    startTimer();
+  }
+
+
+  void reset() {
+    setState(() {
+      // NEW : Reset the duration value.
+      duration = Duration(seconds: durationValue);
+    });
+  }
+
+
+  void addTime() {
+    const decreaseSeconds = 1;
+    setState(() {
+      final sec = duration.inSeconds - decreaseSeconds;
+      if (sec < 0) {
+        timer?.cancel();
+        context.read<ResendChangeNotifier>().toggleResend();
+      } else {
+        duration = Duration(seconds: sec);
+      }
+    });
+  }
+
+
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
+
+  void startTimer() {
+    timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
+  }
+
 
   @override
   Widget build(BuildContext context) {
+
+    String secondsText = twoDigits(duration.inSeconds);
+    String buttonName = '00:$secondsText';
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       extendBodyBehindAppBar: true,
@@ -189,15 +242,46 @@ class _OTPEmailVerificationState extends State<OTPEmailVerification> {
                         style: TextStyle(color: Colors.black54),
                       ),
                       const SizedBox(width: 10.0),
-                      InkWell(
-                        onTap: () {
-                        },
-                        child: const Text(
-                          'Resend OTP',
-                          style: TextStyle(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.bold),
+                      (!context.watch<ResendChangeNotifier>().resendOTP)
+                          ? Text(
+                        buttonName,
+                        style: const TextStyle(
+                          fontSize: 15.0,
                         ),
+                      )
+                          : InkWell(
+                        child: const Text(
+                          "Resend OTP",
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15.0,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() async {
+                            // NEW : Set the resendOTP = false
+                            context.read<ResendChangeNotifier>().toggleResend();
+                            var data = jsonEncode(<String, String>{
+                              'User': '${widget.phoneNo}',
+                              'Email': '${widget.email}',
+                              'DeviceName': '${widget.deviceName}',
+                              'DeviceID': '${widget.identifier}',
+                            });
+                            httpResponse = await API_Manager()
+                                .getData(Strings.sendotpinemail, data);
+
+                            if (httpResponse.statusCode == 200) {
+                              var jsonString = httpResponse.body;
+                              var jsonMap = jsonDecode(jsonString);
+                              resendotp = EmailLoginResponse.fromJson(jsonMap);
+                            }
+                            // NEW : Reset the timer
+                            reset();
+                            // NEW : Start the timer
+                            startTimer();
+                          });
+                        },
                       ),
                     ],
                   ),

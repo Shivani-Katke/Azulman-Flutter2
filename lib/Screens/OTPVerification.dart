@@ -16,7 +16,6 @@ import 'package:demo_azulmanproject/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:otp_autofill/otp_autofill.dart';
 
-
 class OTPVerification extends StatefulWidget {
   OTPVerification(
       {required this.phoneno,
@@ -37,17 +36,15 @@ class _OTPVerificationState extends State<OTPVerification> {
   late OTPInteractor _otpInteractor;
 
   Timer? timer;
-
   // NEW : Change Duration value of this two variables.
   int durationValue = 45;
   Duration duration = const Duration(seconds: 45);
+  int consecutiveTaps = 1; // NEW 1 : To set counter of number of taps.
+
 
   @override
   void initState() {
     super.initState();
-
-    // NEW : Listening for OTP.
-    //listenForOtp();
     startTimer();
   }
 
@@ -85,8 +82,10 @@ class _OTPVerificationState extends State<OTPVerification> {
     timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
   }
 
+
   late http.Response httpResponse;
-  late VerifyUser login;
+  late LoginResponse resendotp;
+  late  LoginUserData login;
 
   String twoDigits(int n) => n.toString().padLeft(2, '0');
 
@@ -95,7 +94,6 @@ class _OTPVerificationState extends State<OTPVerification> {
 
     String secondsText = twoDigits(duration.inSeconds);
     String buttonName = '00:$secondsText';
-
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -164,7 +162,8 @@ class _OTPVerificationState extends State<OTPVerification> {
                     Container(
                       color: const Color(0xFF967d51),
                       width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height * 0.12,
+                      height: SizeConfig.screenHeight! / 8.5,
+                      // height: MediaQuery.of(context).size.height * 0.12,
                       child: const Align(
                         alignment: Alignment(0.9, 0.55),
                         child: Text(
@@ -182,7 +181,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                   top: MediaQuery.of(context).devicePixelRatio * 12,
                   left: SizeConfig.screenWidth! / 2.5,
                   child: Container(
-                    height: 80,
+                    height: SizeConfig.screenHeight! / 10,
                     width: 80,
                     decoration: kAzulmanLogo,
                   ),
@@ -250,15 +249,14 @@ class _OTPVerificationState extends State<OTPVerification> {
                       ),
                       SizedBox(width: 10.0),
 
+
                       // NEW : Check if OTP is resendOTP = false
-                      (!context.watch<ResendChangeNotifier>().resendOTP)
-                          ? Text(
+                      if (!context.watch<ResendChangeNotifier>().resendOTP) Text(
                         buttonName,
                         style: const TextStyle(
                           fontSize: 15.0,
                         ),
-                      )
-                          : InkWell(
+                      ) else InkWell(
                         child: const Text(
                           "Resend OTP",
                           style: TextStyle(
@@ -268,12 +266,27 @@ class _OTPVerificationState extends State<OTPVerification> {
                           ),
                         ),
                         onTap: () {
-                          // NEW : Set the resendOTP = false
-                          context.read<ResendChangeNotifier>().toggleResend();
-                          // NEW : Reset the timer
-                          reset();
-                          // NEW : Start the timer
-                          startTimer();
+                           setState(() async {
+                             // NEW : Set the resendOTP = false
+                             context.read<ResendChangeNotifier>().toggleResend();
+                             var data = jsonEncode(<String, String>{
+                               'User': '${widget.phoneno}',
+                               'DeviceName': '${widget.deviceName}',
+                               'DeviceID': '${widget.identifier}',
+                             });
+                             httpResponse = await API_Manager()
+                                 .getData(Strings.loginWithOtpUrl, data);
+
+                             if (httpResponse.statusCode == 200) {
+                               var jsonString = httpResponse.body;
+                               var jsonMap = jsonDecode(jsonString);
+                               resendotp = LoginResponse.fromJson(jsonMap);
+                             }
+                             // NEW : Reset the timer
+                             reset();
+                             // NEW : Start the timer
+                             startTimer();
+                           });
                         },
                       ),
 
@@ -315,7 +328,7 @@ class _OTPVerificationState extends State<OTPVerification> {
                           if (httpResponse.statusCode == 200) {
                             var jsonString = httpResponse.body;
                             var jsonMap = jsonDecode(jsonString);
-                            login = VerifyUser.fromJson(jsonMap);
+                            login =  LoginUserData.fromJson(jsonMap);
                           }
                           if (login.isValidUser == "true") {
                             Navigator.pushAndRemoveUntil(

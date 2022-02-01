@@ -268,8 +268,7 @@ class _EmailloginState extends State<Emaillogin> {
                           if (httpResponse.statusCode == 200) {
                             var jsonString = httpResponse.body;
                             var jsonMap = jsonDecode(jsonString);
-                            login =
-                                EmailLoginResponse.fromJson(jsonMap);
+                            login = EmailLoginResponse.fromJson(jsonMap);
                           }
                           if (login.isValidUser == "true") {
                             _sendDataToSecondScreen(context);

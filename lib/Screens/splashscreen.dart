@@ -1,7 +1,11 @@
+import 'package:demo_azulmanproject/Screens/Customerhome.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'loginscreen.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+String? finalPhone;
 
 class splashscreen extends StatefulWidget {
 
@@ -13,32 +17,46 @@ class _splashscreenState extends State<splashscreen> {
   @override
 
   void initState() {
+    getValidationData().whenComplete(() async {
+      Timer(
+        const Duration(seconds: 3),
+            () => Get.offAll(finalPhone == null ? loginscreen() : Customerhome()),
+
+        // Navigator.of(context).pushReplacement(MaterialPageRoute(
+        //   builder: (BuildContext context)  =>  loginscreen(),
+        // ),
+        // ),
+      );
+      print('hello');
+    });
     super.initState();
-    Timer(
-      const Duration(seconds: 3),
-          () =>
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (BuildContext context) =>  loginscreen(),
-          ),
-          ),
-    );
+
+  }
+
+  Future getValidationData () async {
+    final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    var obtainedPhone = sharedPreferences.getString('phone');
+    setState(() {
+      finalPhone = obtainedPhone;
+    });
+    print(finalPhone);
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('images/azulman_bg.png'),
             fit: BoxFit.fill,
           ),
         ),
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
           backgroundColor: Colors.transparent,
           body: Center(
             child: Padding(
-              padding: EdgeInsets.only(top: 300.0,bottom: 250.0),
+              padding: EdgeInsets.only(top: 250.0,bottom: 200.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -53,7 +71,7 @@ class _splashscreenState extends State<splashscreen> {
               color: const Color(0xFF967d51),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const <Widget> [
+                children: <Widget> [
                   Text("SBE Technologies Pvt Ltd.",
                     style: TextStyle(color: Colors.white),
                   )
